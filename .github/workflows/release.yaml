@@ -41,4 +41,4 @@ jobs:
             remote
           docker context use remote
           docker-compose --context remote down
-          docker-compose --context remote up --force-recreate --build
+          docker-compose --context remote up -d --force-recreate --build
