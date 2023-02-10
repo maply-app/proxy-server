@@ -33,7 +33,7 @@ jobs:
           echo MEDIA_SERVER=${{ secrets.MEDIA_SERVER }} >> .env
 
       - name: Cleaning up and start remote Docker Compose
-        if: success() || failure()
+        if: success()
         run: |
           docker context create \
             --docker host=ssh://${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_IP }} \
@@ -41,4 +41,4 @@ jobs:
             remote
           docker context use remote
           docker-compose --context remote down
-          docker-compose --context remote up -d --force-recreate --build
+          docker-compose --context remote up --force-recreate --build
