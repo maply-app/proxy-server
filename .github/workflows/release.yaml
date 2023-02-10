@@ -1,0 +1,44 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+
+  deploy:
+    name: Deploy
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Install SSH key to host
+        uses: kielabokkie/ssh-key-and-known-hosts-action@v1.1.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-host: ${{ secrets.HOST_IP }}
+
+      - name: Install correct version of Docker Compose
+        run: |
+          sudo pip install docker-compose
+          sudo pip install dump-env
+
+      - name: Add environment variables
+        run: |
+          touch .env
+          echo NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx >> .env
+          echo BASE_SERVER=${{ secrets.BASE_SERVER }} >> .env
+          echo MEDIA_SERVER=${{ secrets.MEDIA_SERVER }} >> .env
+
+      - name: Cleaning up and start remote Docker Compose
+        if: success() || failure()
+        run: |
+          docker context create \
+            --docker host=ssh://${{ secrets.HOST_USERNAME }}@${{ secrets.HOST_IP }} \
+            --description="Remote engine at ${{ secrets.HOST_IP }}" \
+            remote
+          docker context use remote
+          docker-compose --context remote down
+          docker-compose --context remote up -d --force-recreate --build
