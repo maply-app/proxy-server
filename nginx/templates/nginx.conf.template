@@ -12,7 +12,7 @@ http {
     open_file_cache_min_uses 2;
     open_file_cache_errors on;
 
-    client_max_body_size 128M;
+    client_max_body_size 10M;
     client_body_buffer_size 1m;
     client_header_buffer_size 512k;
 
@@ -22,6 +22,8 @@ http {
     keepalive_timeout 300;
     send_timeout 10;
 
+    limit_req_zone $binary_remote_addr zone=mylimit:25m rate=35r/s;
+
     include modules/mime.types;
 
     server {
@@ -29,6 +31,7 @@ http {
         server_name api.maply.fun;
 
         location / {
+            limit_req zone=mylimit burst=20 nodelay;
             proxy_pass ${BASE_SERVER};
         }
     }
@@ -38,6 +41,7 @@ http {
         server_name media.maply.fun;
 
         location / {
+            limit_req zone=mylimit burst=20 nodelay;
             proxy_pass ${MEDIA_SERVER};
         }
     }
